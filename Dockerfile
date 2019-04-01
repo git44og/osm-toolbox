@@ -4,6 +4,7 @@ MAINTAINER Jens Fischer
 
 ENV HOME /root
 ENV OSM2PGSQL_VERSION 0.96.0
+ENV OSMCONVERT_VERSION 0.9
 
 RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/apk/repositories \
  && apk update
@@ -12,26 +13,25 @@ RUN apk add --no-cache \
     postgresql-client \
     postgis@testing \
     gdal@testing \
+    proj4-dev@testing \
     lua5.2 \
     expat \
     libbz2 \
     nodejs \
     nodejs-npm
 
-# osm2psql
 RUN apk add --no-cache \
-	make \
-	cmake \
-	expat-dev \
-	g++ \
-	git \
-	boost-dev \
-	zlib-dev \
-	bzip2-dev \
-	proj4-dev@testing \
-	geos-dev@testing \
-	lua5.2-dev \
-	postgresql-dev \
+    boost-dev \
+    bzip2-dev \
+    cmake \
+    expat-dev \
+    geos-dev@testing \
+    git \
+    g++ \
+    lua5.2-dev \
+    make \
+    postgresql-dev \
+    zlib-dev \
 # build osm2pgsql
  && mkdir -p ${HOME}/src \
  && cd ${HOME}/src \
@@ -44,29 +44,23 @@ RUN apk add --no-cache \
  && cd $HOME \
  && rm -rf src \
 # build osmconvert
- && apk add --no-cache \
-	make \
-	cmake \
-	expat-dev \
-	g++ \
-	wget \
-	zlib-dev \
- && wget -O - http://m.m.i24.cc/osmconvert.c | cc -x c - -lz -O3 -o /usr/local/bin/osmconvert \
+ && mkdir -p ${HOME}/src \
+ && git clone --depth 1 --branch ${OSMCONVERT_VERSION} https://gitlab.com/osm-c-tools/osmctools.git ${HOME}/src \
+ && cc ${HOME}/src/src/osmconvert.c -lz -o osmconvert \
+ && mv osmconvert /usr/local/bin \
+ && rm -rf src \
  && apk --purge del \
-	make \
-	cmake \
-	expat-dev \
-	g++ \
-	git \
-	boost-dev \
-	zlib-dev \
-	bzip2-dev \
-	geos-dev \
-	lua5.2-dev \
-	postgresql-dev \
-	expat-dev \
-	wget \
-	zlib-dev
+    boost-dev \
+    bzip2-dev \
+    cmake \
+    expat-dev \
+    g++ \
+    geos-dev \
+    git \
+    lua5.2-dev \
+    make \
+    postgresql-dev \
+    zlib-dev
 
 WORKDIR ${HOME}
 
