@@ -1,6 +1,6 @@
-FROM alpine
+FROM python:3.6-alpine3.9
 
-MAINTAINER Jens Fischer
+LABEL Jens Fischer
 
 ENV HOME /root
 ENV OSM2PGSQL_VERSION 0.96.0
@@ -9,17 +9,20 @@ RUN echo "@testing http://dl-cdn.alpinelinux.org/alpine/edge/testing" >> /etc/ap
  && apk update
 
 RUN apk add --no-cache \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
     postgresql-client \
-    postgis@testing \
-    gdal@testing \
+    postgis \
+    gdal \
     lua5.2 \
     expat \
     libbz2 \
-    nodejs \
-    nodejs-npm
+    npm
 
 # osm2psql
-RUN apk add --no-cache \
+RUN apk add --no-cache --virtual .osm2pgsql-build-deps \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    --repository http://dl-cdn.alpinelinux.org/alpine/edge/main \
 	make \
 	cmake \
 	expat-dev \
@@ -28,23 +31,37 @@ RUN apk add --no-cache \
 	boost-dev \
 	zlib-dev \
 	bzip2-dev \
-	proj4-dev@testing \
-	geos-dev@testing \
-	lua5.2-dev \
-	postgresql-dev \
+	proj-dev \
+	geos-dev \
+	lua5.3-dev \
+    libpq \
+	postgresql-dev
 # build osm2pgsql
- && mkdir -p ${HOME}/src \
- && cd ${HOME}/src \
- && git clone --depth 1 --branch ${OSM2PGSQL_VERSION} https://github.com/openstreetmap/osm2pgsql.git \
- && mkdir -p osm2pgsql/build \
- && cd osm2pgsql/build \
- && cmake -DLUA_LIBRARY=/usr/lib/liblua-5.2.so.0 .. \
- && make \
- && make install \
- && cd $HOME \
- && rm -rf src \
+RUN mkdir /home/root \
+    && wget -O /home/root/osm2pgsql.tar.gz "https://github.com/openstreetmap/osm2pgsql/archive/master.tar.gz" \
+    && tar \
+        --extract \
+        --file /home/root/osm2pgsql.tar.gz \
+        --directory /home/root \
+    && rm /home/root/osm2pgsql.tar.gz \
+    && cd /home/root/osm2pgsql-master \
+    && mkdir build && cd build \
+    # && make && make man && make install \
+    && cmake ..
+    # && cmake -DLUA_LIBRARY=/usr/lib/lua5.2/liblua.so ..
+    # && cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+# RUN mkdir -p ${HOME}/src \
+#  && cd ${HOME}/src \
+#  && git clone --depth 1 --branch ${OSM2PGSQL_VERSION} https://github.com/openstreetmap/osm2pgsql.git \
+#  && mkdir -p osm2pgsql/build \
+#  && cd osm2pgsql/build \
+#  && cmake -DLUA_LIBRARY=/usr/lib/liblua-5.2.so.0 .. \
+#  && make \
+#  && make install \
+#  && cd $HOME \
+#  && rm -rf src \
 # build osmconvert
- && apk add --no-cache \
+RUN apk add --no-cache \
 	make \
 	cmake \
 	expat-dev \
