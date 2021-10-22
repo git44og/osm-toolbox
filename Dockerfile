@@ -84,6 +84,7 @@ RUN apk add --no-cache \
         libbz2=1.0.8-r1 \
         npm=14.18.1-r0 \
         geos=3.8.1-r2 \
+        boost=1.72.0-r6 \
         #  version of gdal-dev needs to be the same as gdal in pip install
         gdal=3.1.4-r3 \
         gdal-dev=3.1.4-r3 \
